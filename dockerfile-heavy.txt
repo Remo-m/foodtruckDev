@@ -1,0 +1,34 @@
+FROM alpine:3.11
+
+# Install system dependencies
+RUN apk add --no-cache \
+    python2 \
+    py2-pip \
+    nodejs \
+    npm \
+    gcc \
+    python2-dev \
+    musl-dev \
+    linux-headers
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files first for better cache utilization
+COPY flask-app/requirements.txt flask-app/package.json flask-app/package-lock.json flask-app/webpack.config.js flask-app/.babelrc ./
+
+# Install dependencies
+RUN pip install -r requirements.txt && \
+    npm install
+
+# Copy the rest of the application
+COPY flask-app/ .
+
+# Build frontend
+RUN npm run build
+
+# Expose the application port
+EXPOSE 5000
+
+# Set the entrypoint
+ENTRYPOINT ["python", "app.py"]
